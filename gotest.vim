@@ -1,28 +1,38 @@
 scriptencoding utf-8
-" get current line go test func name
+" conf init
+let g:GO_TEST_FILE_BUF_WIN_ID  = 0 
+let s:errLineNu = {}
+if !exists('g:VIM_GO_PATH')
 let g:VIM_GO_PATH = $GOPATH
+endif
+if !exists("g:ATUO_LIST_FUNC")
+    let g:ATUO_LIST_FUNC = 1
+endif
+func GOTestInit()abort
+if g:ATUO_LIST_FUNC == 1
 call sign_define([
            \ {'name' : 'canTest',
            \  'text' : '>>',
-           \ "linehl" : "Search"},
+           \ },
            \ {'name' : 'error',
            \  'text' : '!>',
            \ "texthl" : "Error"}
            \ ])
+
+"autoCmd
+augroup GOTEST
+autocmd  BufReadPre,CursorMoved  *_test.go  :call s:redrawSign()
+augroup END
+endif
+endfunc
+" command
+command! GOTEST :call s:runGoFuncTest() 
+command! GOTESTCLEAR :call s:clearSign() 
+" get current line go test func name
 function s:getGoTestFuncNameInLine() abort
     let fname = matchstr(getline("."),"Test.*(")
     let fname = substitute(fname,"(","","")
     return fname
-endfunction
-call s:getGoTestFuncNameInLine()
-
-func s:initGoTestEnv()abort
-    if g:VIM_GO_PATH == ""
-        g:VIM_GO_PATH = $GOPATH
-    endif
-    if g:VIM_GO_PATH == ""
-        echoerr "$GOPATH / VIM_GO_PATH  not set"
-    endif
 endfunction
 
 function s:checkGoTestEnv()abort
@@ -35,10 +45,28 @@ endfunction
 func s:getGitProjectPath()abort
     let curPath = eval("%p")
 endfunc
+function! Callback_Handler(channel, msg)
+   let texts = split(a:msg,'\n')
+   execute(":wincmd p")
+   let ls = s:getAllTestName()
+   for text in  texts
+        if  text =~ "FAIL" && text =~ "Test"
+            for fn in keys(ls)
+                if  text =~ fn
+                    let s:errLineNu[ls[fn]] = fn
+                    call s:signErrFunc(ls[fn])
+                endif
+            endfor
+        endif
+    endfor
+endfunction
 
 " run simple func Test
 function s:runGoFuncTest() abort
     call s:checkGoTestEnv()
+    if has_key(s:errLineNu , line("."))
+        call remove(s:errLineNu,line("."))
+    endif
     let fname = expand('%:t')
     let aFname = expand('%:p')
     let curDir = substitute(aFname,fname,"","")
@@ -48,46 +76,55 @@ function s:runGoFuncTest() abort
         return
     endif
     let testShell = join(['go','test','-v',curDir,'-run',printf('^%s$',funcName)])
-    call term_start(testShell)
+    call term_start(testShell,{"callback":"Callback_Handler"})
 endfunction
-
 func s:getAllTestName()abort
     let lineNu = line("$")
     let lineMap ={} 
-    for n in range(0,lineNu  )
+    for n in range(0,lineNu)
         let l = getline(n)
-        if  l=~"func.*Test" && l =~"testing.T"
-
+        if  l=~"func.*Test" && l =~"testing.T" 
             let l = matchstr(l,"Test.*(")
             let l = substitute(l,"(","","")
-            let lineMap[n] =  l
+            let lineMap[l] =  n
+            
     endif
     endfor
-    echo lineMap
     return lineMap
 endfunc
 
-func s:signAllTestFunc(testFuns)abort
-    for l in keys(a:testFuns) 
-            call sign_place(l, "","canTest",
-            \   bufname("%"),{"lnum":l})
+func s:signAllTestFunc(tfs)abort
+    for l in keys(a:tfs) 
+            if has_key(s:errLineNu,a:tfs[l])
+                continue
+            endif
+            call sign_place(1, "","canTest",
+            \   bufname("%"),{"lnum":a:tfs[l]})
     endfor
 endfunc
 
-func s:signErrFunc(lineNu) abort
-            call sign_place(1, "","error",
-            \   bufname("%"),{"lnum":lineNu})
+func s:signErrFunc(lineN) abort
+    call sign_place(2,"","error",bufname("%"),{"lnum":a:lineN})
 endfunc
 
-func s:clearAllSign(testFuncs)abort
-    for l in keys(a:testFuncs) 
-    call sign_unplace('', {'buffer' : bufname("%"), 'id' : l})
+func s:clearAllSign(tfs)abort
+    for l in keys(a:tfs) 
+    call sign_unplace('', {'buffer' : bufname("%"), 'id' : 1})
     endfor
 endfunction
 
 func s:showErrMsgInTer(errmsg)abort
     call term_start(printf("echo  err: %s",a:errmsg))
 endfunc
-let fs = s:getAllTestName()
-"call s:clearAllSign(fs)
-call s:signAllTestFunc(fs)
+
+func s:redrawSign() abort
+    let testFuncs = s:getAllTestName()
+    call s:clearAllSign(testFuncs)
+    call s:signAllTestFunc(testFuncs)
+endfunc
+
+func s:clearSign() abort
+    let testFuncs = s:getAllTestName()
+    call s:clearAllSign(testFuncs)
+endfunc
+
