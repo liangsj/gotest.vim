@@ -26,8 +26,7 @@ augroup END
 endif
 endfunc
 " command
-command! GOTEST :call s:runGoFuncTest() 
-command! GOTESTCLEAR :call s:clearSign() 
+command! Gotest :call s:runGoFuncTest() 
 " get current line go test func name
 function s:getGoTestFuncNameInLine() abort
     let fname = matchstr(getline("."),"Test.*(")

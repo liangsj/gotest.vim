@@ -1,2 +1,2 @@
 # gotest.vim
-基于vim termin
+基于vim - terminal 的异步 gotest插件
