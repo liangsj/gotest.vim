@@ -67,6 +67,7 @@ function s:runGoFuncTest() abort
     let fname = expand('%:t')
     let aFname = expand('%:p')
     let curDir = substitute(aFname,fname,"","")
+    let curDir = substitute(curDir,"/data00","","")
     let funcName =  s:getGoTestFuncNameInLine()
     if funcName == ""
         call s:showErrMsgInTer( "this line do not have Unit TestFunc")
