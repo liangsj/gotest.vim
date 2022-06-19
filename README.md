@@ -20,12 +20,14 @@ let g:ATUO_LIST_FUNC = 1
 在测试行执行 :GTest 命令，展示测试结果
 
 # 效果展示
-函数列表图
+函数列表图</br>
 ![image](https://github.com/liangsj/gotest.vim/blob/main/doc/lists.jpg) 
 
 
-错误参数图
+错误参数图</br>
 ![image](https://github.com/liangsj/gotest.vim/blob/main/doc/error.jpg) 
 
+# 其他
+欢迎使用和参与开发 ，如有bug，请及时和我联系
 
 
