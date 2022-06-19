@@ -1,6 +1,5 @@
 scriptencoding utf-8
 " conf init
-map gg :GOTEST <CR>
 let g:GO_TEST_FILE_BUF_WIN_ID  = 0 
 let s:errLineNu = {}
 if !exists('g:VIM_GO_PATH')
@@ -129,4 +128,3 @@ func s:clearSign() abort
     call s:clearAllSign(testFuncs)
 endfunc
 
-call GOTestInit()
