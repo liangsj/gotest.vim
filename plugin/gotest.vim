@@ -8,7 +8,6 @@ endif
 if !exists("g:ATUO_LIST_FUNC")
     let g:ATUO_LIST_FUNC = 1
 endif
-func GOTestInit()abort
 if g:ATUO_LIST_FUNC == 1
 call sign_define([
            \ {'name' : 'canTest',
@@ -24,9 +23,8 @@ augroup GOTEST
 autocmd  BufReadPre,CursorMoved  *_test.go  :call s:redrawSign()
 augroup END
 endif
-endfunc
 " command
-command! Gotest :call s:runGoFuncTest() 
+command! Gtest :call s:runGoFuncTest() 
 " get current line go test func name
 function s:getGoTestFuncNameInLine() abort
     let fname = matchstr(getline("."),"Test.*(")
@@ -75,6 +73,12 @@ function s:runGoFuncTest() abort
         return
     endif
     let testShell = join(['go','test','-v',curDir,'-run',printf('^%s$',funcName)])
+    if has("nvim")
+    let ret = system(testShell)
+    call s:showResult(ret)
+    call Callback_Handler("", ret)
+    return
+    endif
     call term_start(testShell,{"callback":"Callback_Handler"})
 endfunction
 func s:getAllTestName()abort
@@ -127,3 +131,21 @@ func s:clearSign() abort
     call s:clearAllSign(testFuncs)
 endfunc
 
+let s:gotest_buffer = 'GO_TEST_BUF'
+function! s:showResult(results) abort
+   let lineSum = 1
+  if bufexists(s:gotest_buffer)
+    let winid = bufwinid(s:gotest_buffer)
+    if winid isnot# -1
+      call win_gotoid(winid)
+    else
+      execute 'sbuffer' s:gotest_buffer
+    endif
+    let lineSum = line("$")
+  else
+    execute 'new' s:gotest_buffer
+    set buftype=nofile
+  endif
+  "%delete _
+  call setline(lineSum +1, split(a:results, '\n'))
+endfunction
