@@ -22,6 +22,8 @@ let g:ATUO_LIST_FUNC = 1
 # 效果展示
 函数列表图
 ![image](https://github.com/liangsj/gotest.vim/blob/main/doc/lists.jpg) 
+
+
 错误参数图
 ![image](https://github.com/liangsj/gotest.vim/blob/main/doc/error.jpg) 
 
